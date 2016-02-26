@@ -2,7 +2,8 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.Workbench ActiveDocument="DirectShare/Program.cs">
     <Files>
-      <File FileName="DirectShare/Program.cs" Line="24" Column="22" />
+      <File FileName="DirectShare/Program.cs" Line="13" Column="6" />
+      <File FileName="DirectShare/Server/ServerUI.cs" Line="60" Column="22" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

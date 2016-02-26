@@ -28,7 +28,7 @@ namespace DirectShare.Server
         private void handleCommand(string command)
         {
             string[] parts = command.Split(' ');
-            switch (parts[0])
+            switch (parts[0].ToLower())
             {
                 case "help":
                     displayHelp();
@@ -37,7 +37,7 @@ namespace DirectShare.Server
                     foreach (ConnectingClient client in server.ConnectedClients)
                         Console.WriteLine(client.ID + ": " + client.IP);
                     break;
-                case "listAccepted":
+                case "listaccepted":
                     foreach (ConnectingClient client in server.AcceptedClients)
                         Console.WriteLine(client.ID + ": " + client.IP);
                     break;
