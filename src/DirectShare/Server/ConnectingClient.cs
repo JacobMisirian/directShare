@@ -38,6 +38,11 @@ namespace DirectShare.Server
         /// <value>The recieve thread.</value>
         public Thread RecieveThread { get; set; }
         /// <summary>
+        /// Gets or sets the ID.
+        /// </summary>
+        /// <value>The ID.</value>
+        public int ID { get; set; }
+        /// <summary>
         /// Initializes a new instance of the <see cref="DirectShare.Server.ConnectingClient"/> class.
         /// </summary>
         /// <param name="client">Client.</param>
@@ -48,12 +53,16 @@ namespace DirectShare.Server
             Input = new BinaryReader(client.GetStream());
         }
         /// <summary>
-        /// Send the specified data.
+        /// Send the specified path.
         /// </summary>
-        /// <param name="data">Data.</param>
-        public void Send(string data)
+        /// <param name="path">Path.</param>
+        public void Send(string path)
         {
-            Send(Encoding.ASCII.GetBytes(data));
+            BinaryReader br = new BinaryReader(new StreamReader(path).BaseStream);
+            Output.Write(new FileInfo(path).Length + "\r\n");
+            while (br.BaseStream.Position < br.BaseStream.Length)
+                Output.Write(br.ReadByte());
+            Output.Flush();
         }
         /// <summary>
         /// Send the specified data.
