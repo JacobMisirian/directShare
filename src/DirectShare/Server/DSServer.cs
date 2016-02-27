@@ -51,6 +51,32 @@ namespace DirectShare.Server
 
             new Thread(() => listenForConnections()).Start();
         }
+
+        private void listenForConnections()
+        {
+            while (true)
+            {
+                ConnectingClient client = new ConnectingClient(listener.AcceptTcpClient());
+                client.RecieveThread = new Thread(() => listenForMessages(client));
+                client.RecieveThread.Start();
+
+                ConnectedClients.Add(client);
+                OnClientConnected(new ClientConnectedEventArgs { ConnectingClient = client });
+            }
+        }
+
+        private void listenForMessages(ConnectingClient client)
+        {
+            try
+            {
+                while (true)
+                    OnTextRecieved(new TextRecievedEventArgs { Client = client, Message = client.Input.ReadString() });
+            }
+            catch (IOException ex)
+            {
+                OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+            }
+        }
         /// <summary>
         /// Sends to client.
         /// </summary>
@@ -162,32 +188,6 @@ namespace DirectShare.Server
         public void AcceptClient(ConnectingClient client)
         {
             AcceptedClients.Add(client);
-        }
-
-        private void listenForConnections()
-        {
-            while (true)
-            {
-                ConnectingClient client = new ConnectingClient(listener.AcceptTcpClient());
-                client.RecieveThread = new Thread(() => listenForMessages(client));
-                client.RecieveThread.Start();
-
-                ConnectedClients.Add(client);
-                OnClientConnected(new ClientConnectedEventArgs { ConnectingClient = client });
-            }
-        }
-
-        private void listenForMessages(ConnectingClient client)
-        {
-            try
-            {
-                while (true)
-                    OnTextRecieved(new TextRecievedEventArgs { Client = client, Message = client.Input.ReadString() });
-            }
-            catch (IOException ex)
-            {
-                OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
-            }
         }
         /// <summary>
         /// Occurs when client connected.
