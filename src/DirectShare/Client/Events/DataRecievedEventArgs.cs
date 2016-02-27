@@ -30,6 +30,7 @@ namespace DirectShare.Client
                 writer.Write(Reader.ReadByte());
             writer.Flush();
             writer.Close();
+            Reader.Close();
         }
     }
 }
