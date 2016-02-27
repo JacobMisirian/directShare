@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -51,12 +52,54 @@ namespace DirectShare.Server
             new Thread(() => listenForConnections()).Start();
         }
         /// <summary>
+        /// Sends to client.
+        /// </summary>
+        /// <param name="client">Client.</param>
+        /// <param name="path">Path.</param>
+        public void SendToClient(ConnectingClient client, string path)
+        {
+            try
+            {
+                client.Send(path);
+            }
+            catch (IOException ex)
+            {
+                OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+            }
+        }
+        /// <summary>
+        /// Sends to client.
+        /// </summary>
+        /// <param name="client">Client.</param>
+        /// <param name="data">Data.</param>
+        public void SendToClient(ConnectingClient client, byte[] data)
+        {
+            try
+            {
+                client.Send(data);
+            }
+            catch (IOException ex)
+            {
+                OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+            }
+        }
+        /// <summary>
         /// Sends to connected clients.
         /// </summary>
         /// <param name="data">Data.</param>
-        public void SendToConnectedClients(string data)
+        public void SendToConnectedClients(string path)
         {
-            SendToConnectedClients(Encoding.ASCII.GetBytes(data));
+            foreach (ConnectingClient client in ConnectedClients)
+            {
+                try
+                {
+                    client.Send(path);
+                }
+                catch (IOException ex)
+                {
+                    OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+                }
+            }
         }
         /// <summary>
         /// Sends to connected clients.
@@ -65,15 +108,34 @@ namespace DirectShare.Server
         public void SendToConnectedClients(byte[] data)
         {
             foreach (ConnectingClient client in ConnectedClients)
-                client.Send(data);
+            {
+                try
+                {
+                    client.Send(data);
+                }
+                catch (IOException ex)
+                {
+                    OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+                }
+            }
         }
         /// <summary>
         /// Sends to accepted clients.
         /// </summary>
         /// <param name="data">Data.</param>
-        public void SendToAcceptedClients(string data)
+        public void SendToAcceptedClients(string path)
         {
-            SendToAcceptedClients(Encoding.ASCII.GetBytes(data));
+            foreach (ConnectingClient client in AcceptedClients)
+            {
+                try
+                {
+                    client.Send(path);
+                }
+                catch (IOException ex)
+                {
+                    OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+                }
+            }
         }
         /// <summary>
         /// Sends to accepted clients.
@@ -82,7 +144,16 @@ namespace DirectShare.Server
         public void SendToAcceptedClients(byte[] data)
         {
             foreach (ConnectingClient client in AcceptedClients)
-                client.Send(data);
+            {
+                try
+                {
+                    client.Send(data);
+                }
+                catch (IOException ex)
+                {
+                    OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+                }
+            }
         }
         /// <summary>
         /// Accepts the client.
@@ -108,8 +179,15 @@ namespace DirectShare.Server
 
         private void listenForMessages(ConnectingClient client)
         {
-            while (true)
-                OnTextRecieved(new TextRecievedEventArgs { Client = client, Message = client.Input.ReadString() });
+            try
+            {
+                while (true)
+                    OnTextRecieved(new TextRecievedEventArgs { Client = client, Message = client.Input.ReadString() });
+            }
+            catch (IOException ex)
+            {
+                OnClientDisconnected(new ClientDisconnectedEventArgs { Client = client });
+            }
         }
         /// <summary>
         /// Occurs when client connected.
@@ -118,6 +196,16 @@ namespace DirectShare.Server
         protected virtual void OnClientConnected(ClientConnectedEventArgs e)
         {
             EventHandler<ClientConnectedEventArgs> handler = ClientConnected;
+            if (handler != null)
+                handler(this, e);
+        }
+        /// <summary>
+        /// Occurs when client disconnected.
+        /// </summary>
+        public event EventHandler<ClientDisconnectedEventArgs> ClientDisconnected;
+        protected virtual void OnClientDisconnected(ClientDisconnectedEventArgs e)
+        {
+            EventHandler<ClientDisconnectedEventArgs> handler = ClientDisconnected;
             if (handler != null)
                 handler(this, e);
         }

@@ -13,6 +13,7 @@ namespace DirectShare.Server
             server = new DSServer(ip, port);
 
             server.ClientConnected += server_OnClientConnected;
+            server.ClientDisconnected += server_OnClientDisconnected;
             server.TextRecieved += server_OnTextRecieved;
         }
 
@@ -27,59 +28,68 @@ namespace DirectShare.Server
 
         private void handleCommand(string command)
         {
-            string[] parts = command.Split(' ');
-            switch (parts[0].ToLower())
+            try
             {
-                case "help":
-                    displayHelp();
-                    break;
-                case "list":
-                    foreach (ConnectingClient client in server.ConnectedClients)
-                        Console.WriteLine(client.ID + ": " + client.IP);
-                    break;
-                case "listaccepted":
-                    foreach (ConnectingClient client in server.AcceptedClients)
-                        Console.WriteLine(client.ID + ": " + client.IP);
-                    break;
-                case "accept":
-                    if (parts.Length <= 1)
-                        syntaxError();
-                    else
-                    {
-                        server.AcceptedClients.Add(idToClient(Convert.ToInt32(parts[1])));
-                        Console.WriteLine("Client accepted!");
-                    }
-                    break;
-                case "unaccept":
-                    if (parts.Length <= 1)
-                        syntaxError();
-                    else
-                    {
-                        server.AcceptedClients.Remove(idToClient(Convert.ToInt32(parts[1])));
-                        Console.WriteLine("Client unaccepted!");
-                    }
-                    break;
-                case "send":
-                    if (parts.Length <= 2)
-                        syntaxError();
-                    else
-                    {
-                        switch (parts[1].ToUpper())
+                string[] parts = command.Split(' ');
+                switch (parts[0].ToLower())
+                {
+                    case "help":
+                        displayHelp();
+                        break;
+                    case "list":
+                        foreach (ConnectingClient client in server.ConnectedClients)
+                            Console.WriteLine(client.ID + ": " + client.IP);
+                        break;
+                    case "listaccepted":
+                        foreach (ConnectingClient client in server.AcceptedClients)
+                            Console.WriteLine(client.ID + ": " + client.IP);
+                        break;
+                    case "accept":
+                        if (parts.Length <= 1)
+                            syntaxError();
+                        else
                         {
-                            case "ACCEPTED":
-                                foreach (ConnectingClient client in server.AcceptedClients)
-                                    client.Send(parts[2]);
-                                break;
-                            case "ALL":
-                                foreach (ConnectingClient client in server.AcceptedClients)
-                                    client.Send(parts[2]);
-                                break;
-                            default:
-                                idToClient(Convert.ToInt32(parts[1])).Send(parts[2]);
-                                break;
+                            server.AcceptedClients.Add(idToClient(Convert.ToInt32(parts[1])));
+                            Console.WriteLine("Client accepted!");
                         }
-                    }
-                    break;
+                        break;
+                    case "unaccept":
+                        if (parts.Length <= 1)
+                            syntaxError();
+                        else
+                        {
+                            server.AcceptedClients.Remove(idToClient(Convert.ToInt32(parts[1])));
+                            Console.WriteLine("Client unaccepted!");
+                        }
+                        break;
+                    case "send":
+                        if (parts.Length <= 2)
+                            syntaxError();
+                        else
+                        {
+                            switch (parts[1].ToUpper())
+                            {
+                                case "ACCEPTED":
+                                    server.SendToAcceptedClients(parts[2]);
+                                    break;
+                                case "ALL":
+                                    server.SendToConnectedClients(parts[2]);
+                                    break;
+                                default:
+                                    server.SendToClient(idToClient(Convert.ToInt32(parts[1])), parts[2]);
+                                    break;
+                            }
+                        }
+                        break;
+                }
+            }
+            catch (NullReferenceException ex)
+            {
+                Console.WriteLine("No such ID!");
+            }
+            catch (IndexOutOfRangeException ex)
+            {
+                syntaxError("Arguments were not correct!");
             }
         }
 
@@ -109,11 +119,27 @@ namespace DirectShare.Server
 
         private void server_OnClientConnected(object sender, ClientConnectedEventArgs e)
         {
-            Console.WriteLine("Client connected from " + e.ConnectingClient.IP + ". Check client list with list command");
             e.ConnectingClient.ID = highestID++;
+            Console.WriteLine("Client connected from " + e.ConnectingClient.IP + " with ID " + e.ConnectingClient.ID + ". Check client list with list command");
         }
 
-        private static void server_OnTextRecieved(object sender, TextRecievedEventArgs e)
+        private void server_OnClientDisconnected(object sender, ClientDisconnectedEventArgs e)
+        {
+            try
+            {
+                Console.WriteLine("Client " + e.Client.ID + " disconnected!");
+                server.ConnectedClients.Remove(e.Client);
+                e.Client.TcpClient.Close();
+                if (server.AcceptedClients.Contains(e.Client))
+                    server.AcceptedClients.Remove(e.Client);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+        private void server_OnTextRecieved(object sender, TextRecievedEventArgs e)
         {
             //Console.WriteLine(e.Message);
         }

@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace DirectShare
+namespace DirectShare.Client
 {
     /// <summary>
     /// Data recieved event arguments.

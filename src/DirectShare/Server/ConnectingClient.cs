@@ -38,9 +38,9 @@ namespace DirectShare.Server
         /// <value>The recieve thread.</value>
         public Thread RecieveThread { get; set; }
         /// <summary>
-        /// Gets or sets the ID.
+        /// Gets or sets the I.
         /// </summary>
-        /// <value>The ID.</value>
+        /// <value>The I.</value>
         public int ID { get; set; }
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectShare.Server.ConnectingClient"/> class.

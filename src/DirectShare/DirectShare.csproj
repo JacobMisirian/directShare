@@ -43,6 +43,7 @@
     <Compile Include="Client\DSClient.cs" />
     <Compile Include="Client\Events\DataRecievedEventArgs.cs" />
     <Compile Include="Server\ServerUI.cs" />
+    <Compile Include="Server\Events\ClientDisconnectedEventArgs.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
